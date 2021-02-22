@@ -2,6 +2,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import {
     Configuration as WebpackConfiguration,
+    EnvironmentPlugin,
     HotModuleReplacementPlugin,
 } from "webpack";
 import { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
@@ -72,6 +73,7 @@ const config: Array<Configuration> = [
         output: {
             filename: "bundle.js",
             path: path.resolve(__dirname, "dist"),
+            publicPath: process.env.PUBLIC_PATH,
         },
         devServer: {
             contentBase: path.resolve(__dirname, "public"),
@@ -94,11 +96,14 @@ const config: Array<Configuration> = [
                 files: "src",
             }),
             new CleanWebpackPlugin(),
-            new FaviconsWebpackPlugin(path.resolve(__dirname, "./src/assets/knight.svg")),
+            new FaviconsWebpackPlugin(
+                path.resolve(__dirname, "./src/assets/knight.svg")
+            ),
             new HtmlWebpackPlugin({
                 template: path.resolve(__dirname, "./public/index.html"),
             }),
             new BarWebpackPlugin({}),
+            // new EnvironmentPlugin(["PUBLIC_PATH"]),
         ],
     },
     {
@@ -109,6 +114,15 @@ const config: Array<Configuration> = [
         entry: [path.resolve(__dirname, "./src/index.ts")],
         resolve: {
             extensions: [".js", ".jsx", ".ts", ".tsx", ".json"],
+            alias: {
+                "react-dom": "@hot-loader/react-dom",
+                "@": path.resolve(__dirname, "./src"),
+                "@assets": path.resolve(__dirname, "./src/assets"),
+                "@pages": path.resolve(__dirname, "./src/pages"),
+                "@layout": path.resolve(__dirname, "./src/layout"),
+                "@components": path.resolve(__dirname, "./src/components"),
+                "@database": path.resolve(__dirname, "./src/database"),
+            },
         },
         module: {
             rules: [
@@ -123,15 +137,7 @@ const config: Array<Configuration> = [
                 },
                 {
                     test: /\.svg$/,
-                    use: [
-                        {
-                            loader: "@svgr/webpack",
-                            options: {
-                                typescript: true,
-                            },
-                        },
-                        "url-loader",
-                    ],
+                    use: ["@svgr/webpack", "url-loader"],
                 },
                 {
                     test: /\.(png|jpg|gif)$/i,
@@ -151,6 +157,7 @@ const config: Array<Configuration> = [
         output: {
             filename: "bundle.js",
             path: path.resolve(__dirname, "dist"),
+            publicPath: process.env.PUBLIC_PATH,
         },
         // Define Plugins
         plugins: [
@@ -159,11 +166,14 @@ const config: Array<Configuration> = [
                 files: "src",
             }),
             new CleanWebpackPlugin(),
-            new FaviconsWebpackPlugin(path.resolve(__dirname, "./src/assets/knight.svg")),
+            new FaviconsWebpackPlugin(
+                path.resolve(__dirname, "./src/assets/knight.svg")
+            ),
             new HtmlWebpackPlugin({
                 template: path.resolve(__dirname, "./public/index.html"),
             }),
             new BarWebpackPlugin({}),
+            // new EnvironmentPlugin(["PUBLIC_PATH"]),
         ],
     },
 ];

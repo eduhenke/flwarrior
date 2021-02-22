@@ -1,16 +1,19 @@
 {
 	"name": "flm-web",
 	"scripts": {
-		"build": "cross-env TS_NODE_PROJECT=tsconfig.build.json webpack serve --hot --config-name production",
-		"start": "cross-env TS_NODE_PROJECT=tsconfig.build.json webpack serve --hot --config-name development"
+		"build": "cross-env TS_NODE_PROJECT=tsconfig.build.json webpack build --config-name production",
+		"start": "cross-env TS_NODE_PROJECT=tsconfig.build.json PUBLIC_PATH=remove webpack serve --hot --config-name development"
 	},
 	"license": "MIT",
 	"dependencies": {
 		"@ant-design/icons": "^4.5.0",
 		"antd": "^4.12.3",
+		"buckets-js": "^1.98.2",
 		"dayjs": "^1.10.4",
+		"deep-equal": "^2.0.5",
 		"favicons": "^6.2.1",
 		"favicons-webpack-plugin": "^5.0.1",
+		"file-saver": "^2.0.5",
 		"idb": "^6.0.0",
 		"react": "^17.0.1",
 		"react-digraph": "^7.2.1",
@@ -28,6 +31,8 @@
 		"@babel/preset-typescript": "^7.12.17",
 		"@hot-loader/react-dom": "^17.0.1",
 		"@svgr/webpack": "^5.5.0",
+		"@types/deep-equal": "^1.0.1",
+		"@types/file-saver": "^2.0.1",
 		"@types/node": "^14.14.29",
 		"@types/react": "^17.0.2",
 		"@types/react-dev-utils": "^9.0.4",

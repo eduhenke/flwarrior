@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { GraphView, INode, IGraphInput } from "react-digraph";
 import { Typography } from 'antd';
-import { MachineDBEntry, MachineType } from '@database/schema/machine';
+import { MachineDBEntry, MachineDBEntryState, MachineType } from '@database/schema/machine';
 import {
   default as nodeConfig,
   EMPTY_EDGE_TYPE,
@@ -10,26 +10,53 @@ import {
   INITIAL_STATE_TYPE,
 } from "./config";
 
+type MachineDiagram = Pick<MachineDBEntry, 'states' | 'transitions'>
+
 type Props = {
-  onUpdate: (machine: MachineDBEntry) => void
+  onUpdate: (machine: MachineDiagram) => void,
+  states: MachineDBEntryState[]
 }
 
-export default function StateMachineEditor ({ onUpdate }: Props) {
-  const [graph, setGraph] = useState<IGraphInput>({edges: [], nodes: []});
+export default function StateMachineEditor({ onUpdate, states }: Props) {
+  const [graph, setGraph] = useState<IGraphInput>({ edges: [], nodes: [] });
   const [selected, setSelected] = useState<INode | undefined>();
+  const convertStateToNode = (state: MachineDBEntryState, offset = 0): INode =>
+    graph.nodes.find(node => node.id === state.id)
+    ?? ({
+      id: state.id,
+      title: state.id,
+      type: state.isEntry ? INITIAL_STATE_TYPE : STATE_TYPE,
+      x: offset * 100,
+      y: 0,
+    });
+  const convertGraphToMachine = (graph: IGraphInput): MachineDiagram => ({
+    states: graph.nodes.map(
+      node => ({
+        id: node.title,
+        isEntry: node.type === INITIAL_STATE_TYPE,
+        isExit: false
+      })
+    ),
+    transitions: graph.edges.map(
+      edge => ({
+        from: edge.source,
+        to: { headDirection: 'right', writeSymbol: '', newState: edge.targer },
+        with: { head: '', memory: '' }
+      })
+    ),
+  });
+
+  console.log({ graph })
+  useEffect(() => {
+    onUpdate(convertGraphToMachine(graph));
+  }, [graph]);
 
   useEffect(() => {
-    onUpdate({
-      id: '1',
-      deterministic: true,
-      entryAlphabet: ['a', 'b'],
-      memoryAlphabet: [],
-      name: '1',
-      states: graph.nodes.map(node => ({ id: node.title, isEntry: node.type === INITIAL_STATE_TYPE, isExit: false })),
-      transitions: graph.edges.map(edge => ({ from: edge.source, to: { headDirection: 'right', writeSymbol: '', newState: edge.targer }, with: { head: '', memory: '' } })),
-      type: MachineType.FINITE_STATE_MACHINE,
+    setGraph({
+      ...graph,
+      nodes: states.map(convertStateToNode)
     })
-  }, [graph])
+  }, [states]);
 
   const getNodeIndex = (searchNode) =>
     graph.nodes.findIndex(node => node[NODE_KEY] === searchNode[NODE_KEY])
@@ -38,7 +65,7 @@ export default function StateMachineEditor ({ onUpdate }: Props) {
   const getEdgeIndex = (searchEdge) =>
     graph.edges.findIndex(edge =>
       edge.source === searchEdge.source && edge.target === searchEdge.target);
-  
+
   /*
    * Handlers/Interaction
    */
@@ -79,13 +106,13 @@ export default function StateMachineEditor ({ onUpdate }: Props) {
 
     const viewNode = {
       id: Date.now(),
-      title: 'q'+graph.nodes.length,
+      title: 'q' + graph.nodes.length,
       type: graph.nodes.length ? STATE_TYPE : INITIAL_STATE_TYPE,
       x,
       y
     };
 
-    setGraph({ ...graph, nodes: [...graph.nodes, viewNode]});
+    setGraph({ ...graph, nodes: [...graph.nodes, viewNode] });
   };
 
   // Deletes a node from the graph
@@ -111,7 +138,7 @@ export default function StateMachineEditor ({ onUpdate }: Props) {
       title: ''
     };
 
-    setGraph({ ...graph, edges: [...graph.edges, viewEdge]});
+    setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
     setSelected(viewEdge);
   };
 
@@ -139,7 +166,7 @@ export default function StateMachineEditor ({ onUpdate }: Props) {
   };
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', height: 'inherit'}}>
+    <>
       <Typography>Shift+Click para adicionar estados</Typography>
       <Typography>Shift+Click entre estados para adicionar transições</Typography>
       <GraphView
@@ -160,6 +187,6 @@ export default function StateMachineEditor ({ onUpdate }: Props) {
         onCreateEdge={onCreateEdge}
         onDeleteEdge={onDeleteEdge}
       />
-    </div>
+    </>
   );
 }
