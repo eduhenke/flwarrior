@@ -13,6 +13,7 @@
 		"favicons-webpack-plugin": "^5.0.1",
 		"idb": "^6.0.0",
 		"react": "^17.0.1",
+		"react-digraph": "^7.2.1",
 		"react-dom": "^17.0.1",
 		"react-helmet": "^6.1.0",
 		"react-hot-loader": "^4.13.0",

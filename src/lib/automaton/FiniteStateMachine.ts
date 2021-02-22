@@ -41,7 +41,11 @@ interface IMachine {
 
 class FiniteStateMachine implements IFiniteAutomaton {
     removeState: (state: IState) => void;
-    addTransition: (state: IState, reading: AlphabetSymbol, target: IState) => void;
+    addTransition: (
+        state: IState,
+        reading: AlphabetSymbol,
+        target: IState
+    ) => void;
     getTransitions: () => Tuple<Tuple<IState, AlphabetSymbol>, IState>[];
     getEntryState: () => IState;
     getExitStates: () => Set<IState>;

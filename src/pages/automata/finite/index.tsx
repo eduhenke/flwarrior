@@ -67,7 +67,8 @@ export default function FiniteAutomata(): JSX.Element {
         [machineList]
     );
     // Extra
-    const createAutomata = () => console.log("CREATE");
+    const createAutomata = () => history.push('/automata/finite/create');
+    
     // Fetch Data
     return (
         <>
