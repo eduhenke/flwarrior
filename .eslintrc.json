@@ -26,7 +26,8 @@
         "react/require-default-props": [
             "error",
             { "ignoreFunctionalComponents": true }
-        ]
+        ],
+        "prettier/prettier": 0
     },
     "settings": {
         "import/ignore": [".(scss|less|css)$", ".svg$"]
