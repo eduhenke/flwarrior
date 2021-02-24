@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { GraphView, INode, IGraphInput } from "react-digraph";
+import { GraphView, INode, IGraphInput, IEdge } from "react-digraph";
 import { Typography } from 'antd';
 import { MachineDBEntry, MachineDBEntryState, MachineType } from '@database/schema/machine';
 import {
@@ -10,14 +10,16 @@ import {
   INITIAL_STATE_TYPE,
 } from "./config";
 
-type MachineDiagram = Pick<MachineDBEntry, 'states' | 'transitions'>
+type MachineDiagram = Pick<MachineDBEntry, 'states' | 'transitions'>;
+type MachineDBEntryTransition = MachineDBEntry["transitions"][number];
 
 type Props = {
   onUpdate: (machine: MachineDiagram) => void,
   states: MachineDBEntryState[]
+  transitions: MachineDBEntryTransition[]
 }
 
-export default function StateMachineEditor({ onUpdate, states }: Props) {
+export default function StateMachineEditor({ onUpdate, states, transitions }: Props) {
   const [graph, setGraph] = useState<IGraphInput>({ edges: [], nodes: [] });
   const [selected, setSelected] = useState<INode | undefined>();
   const convertStateToNode = (state: MachineDBEntryState, offset = 0): INode =>
@@ -29,6 +31,10 @@ export default function StateMachineEditor({ onUpdate, states }: Props) {
       x: offset * 100,
       y: 0,
     });
+  // const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge =>
+  //   graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
+  // ;
+
   const convertGraphToMachine = (graph: IGraphInput): MachineDiagram => ({
     states: graph.nodes.map(
       node => ({
@@ -54,7 +60,8 @@ export default function StateMachineEditor({ onUpdate, states }: Props) {
   useEffect(() => {
     setGraph({
       ...graph,
-      nodes: states.map(convertStateToNode)
+      nodes: states.map(convertStateToNode),
+      // edges: transitions.map(convertTransitionsToEdge)
     })
   }, [states]);
 

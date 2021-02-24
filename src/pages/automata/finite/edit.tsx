@@ -303,7 +303,8 @@ export default function RegularGrammarEdit(): JSX.Element {
                         {/* List of Transitions */}
                         <RulesContainer>
                             <StateMachineEditor
-                                onUpdate={(diagram) => {
+                                onUpdate={diagram => {
+                                  // setMachineDb(prev => ({...prev, states, transitions}))
                                     const newStateIds = diagram.states
                                         .map(state => state.id)
                                         .filter(stateId => !states.map(state => state.id).includes(stateId));
@@ -311,6 +312,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                                     newStates.map(state => state.id).forEach(newState);
                                 }}
                                 states={states}
+                                transitions={transitions}
                             />
                         </RulesContainer>
                         {/* <RulesList
