@@ -89,6 +89,8 @@ const SelectBar = styled.section`
     display: flex;
     flex-direction: column;
 `;
+
+
 // Define Page
 export default function RegularGrammarEdit(): JSX.Element {
     // Setup State
@@ -137,6 +139,18 @@ export default function RegularGrammarEdit(): JSX.Element {
             return { ...machine };
         });
     };
+    const newTransition = ({from, to}: {from: string, to: string}) => {
+        setMachineDb((machine) => {
+            if (machine.transitions.findIndex((t) => t.from === from && t.to.newState === to) === -1) {
+                machine.transitions.push({
+                  from,
+                  to: { headDirection: 'right', newState: to, writeSymbol: '' },
+                  with: { head: '', memory: '' }
+                });
+            }
+            return { ...machine };
+          });
+        };
     const deleteState = (stateName: string) => {
         setMachineDb((machine) => {
             const stateToDeleteIdx = machine.states.findIndex(
@@ -304,12 +318,20 @@ export default function RegularGrammarEdit(): JSX.Element {
                         <RulesContainer>
                             <StateMachineEditor
                                 onUpdate={diagram => {
-                                  // setMachineDb(prev => ({...prev, states, transitions}))
-                                    const newStateIds = diagram.states
-                                        .map(state => state.id)
-                                        .filter(stateId => !states.map(state => state.id).includes(stateId));
-                                    const newStates = diagram.states.filter(state => newStateIds.includes(state.id));
-                                    newStates.map(state => state.id).forEach(newState);
+                                  // setMachineDb(prev => ({...prev, states: diagram.states, transitions: diagram.transitions}));
+                                  diagram.states
+                                    .map(state => state.id)
+                                    .filter(stateId => !states.map(state => state.id).includes(stateId))
+                                    .forEach(newState);
+                                  diagram.transitions
+                                    .map(transition => ({from: transition.from, to: transition.to.newState}))
+                                    .filter(newTransition => !(
+                                      transitions.reduce((hasTransition, transition) => (
+                                        hasTransition || newTransition.from === transition.from) && (newTransition.to === transition.to.newState
+                                      ), false)
+                                    ))
+                                    .forEach(newTransition);
+                                    
                                 }}
                                 states={states}
                                 transitions={transitions}

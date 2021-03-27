@@ -19,7 +19,7 @@ type Props = {
   transitions: MachineDBEntryTransition[]
 }
 
-export default function StateMachineEditor({ onUpdate, states, transitions }: Props) {
+export default function StateMachineEditor({ onUpdate, states = [], transitions = [] }: Props) {
   const [graph, setGraph] = useState<IGraphInput>({ edges: [], nodes: [] });
   const [selected, setSelected] = useState<INode | undefined>();
   const convertStateToNode = (state: MachineDBEntryState, offset = 0): INode =>
@@ -31,9 +31,14 @@ export default function StateMachineEditor({ onUpdate, states, transitions }: Pr
       x: offset * 100,
       y: 0,
     });
-  // const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge =>
-  //   graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
-  // ;
+
+  const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge =>
+    graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
+    ?? ({
+      source: transition.from,
+      target: transition.to.newState,
+    })
+  ;
 
   const convertGraphToMachine = (graph: IGraphInput): MachineDiagram => ({
     states: graph.nodes.map(
@@ -46,11 +51,11 @@ export default function StateMachineEditor({ onUpdate, states, transitions }: Pr
     transitions: graph.edges.map(
       edge => ({
         from: edge.source,
-        to: { headDirection: 'right', writeSymbol: '', newState: edge.targer },
+        to: { headDirection: 'right', writeSymbol: '', newState: edge.target },
         with: { head: '', memory: '' }
       })
     ),
-  });
+  })
 
   console.log({ graph })
   useEffect(() => {
@@ -63,7 +68,7 @@ export default function StateMachineEditor({ onUpdate, states, transitions }: Pr
       nodes: states.map(convertStateToNode),
       // edges: transitions.map(convertTransitionsToEdge)
     })
-  }, [states]);
+  }, [states, /* transitions */]);
 
   const getNodeIndex = (searchNode) =>
     graph.nodes.findIndex(node => node[NODE_KEY] === searchNode[NODE_KEY])
