@@ -1,0 +1,28 @@
+[
+    {
+        "type": "Group",
+        "name": "Formais",
+        "parent_id": null,
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "yMWEn7NHgRhdXAYk"
+    },
+    {
+        "type": "File",
+        "name": "/home/njoppi2/projetos/learning/college/formais/trab-entrega-1/flwarrior/src/components/StateMachineEditor/index.tsx",
+        "parent_id": "yMWEn7NHgRhdXAYk",
+        "fsPath": "/home/njoppi2/projetos/learning/college/formais/trab-entrega-1/flwarrior/src/components/StateMachineEditor/index.tsx",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "FdLokWIMp1zRn52e"
+    },
+    {
+        "type": "File",
+        "name": "/home/njoppi2/projetos/learning/college/formais/trab-entrega-1/flwarrior/src/pages/automata/finite/edit.tsx",
+        "parent_id": "yMWEn7NHgRhdXAYk",
+        "fsPath": "/home/njoppi2/projetos/learning/college/formais/trab-entrega-1/flwarrior/src/pages/automata/finite/edit.tsx",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "1M0LqSikXA7Os4fR"
+    }
+]

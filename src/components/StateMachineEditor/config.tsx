@@ -16,12 +16,12 @@ export const nodeSubTypes = [];
 
 const StateShape = (
   <symbol viewBox="0 0 200 200" id="state">
-    <circle cx="100" cy="100" r="50" />
+    <circle cx="100" cy="100" r="50" fill="#ffcccc"/>
   </symbol>
 );
 
 const InitialStateShape = (
-  <symbol viewBox="0 0 200 200" id="initialState">
+  <symbol viewBox="0 0 200 200" id="initialState" fill="#ffcccc">
     <circle cx="100" cy="100" r="50" />
     <circle cx="100" cy="100" r="40" />
   </symbol>
@@ -29,7 +29,7 @@ const InitialStateShape = (
 
 const EmptyEdgeShape = (
   <symbol viewBox="0 0 50 50" id="emptyEdge">
-    <circle cx="25" cy="25" r="8" fill="currentColor" />
+    <circle cx="250" cy="250" r="80" fill="red" />
   </symbol>
 );
 
