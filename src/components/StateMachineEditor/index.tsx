@@ -28,8 +28,8 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
       id: state.id,
       title: state.id,
       type: state.isEntry ? INITIAL_STATE_TYPE : STATE_TYPE,
-      x: offset * 100,
-      y: 0,
+      x: Math.cos(offset / 2) * Math.log2(offset + 1) * 120,
+      y: Math.sin(offset / 2) * Math.log2(offset + 1) * 120,
     });
 
   const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge =>
@@ -37,6 +37,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
     ?? ({
       source: transition.from,
       target: transition.to.newState,
+      handleText: transition.to.writeSymbol
     })
   ;
 
@@ -51,7 +52,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
     transitions: graph.edges.map(
       edge => ({
         from: edge.source,
-        to: { headDirection: 'right', writeSymbol: '', newState: edge.target },
+        to: { headDirection: 'right', writeSymbol: edge.handleText, newState: edge.target },
         with: { head: '', memory: '' }
       })
     ),
@@ -66,9 +67,9 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
     setGraph({
       ...graph,
       nodes: states.map(convertStateToNode),
-      // edges: transitions.map(convertTransitionsToEdge)
+      edges: transitions.map(convertTransitionsToEdge),
     })
-  }, [states, /* transitions */]);
+  }, [states, transitions]);
 
   const getNodeIndex = (searchNode) =>
     graph.nodes.findIndex(node => node[NODE_KEY] === searchNode[NODE_KEY])
@@ -147,9 +148,9 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
       source: sourceViewNode[NODE_KEY],
       target: targetViewNode[NODE_KEY],
       type: EMPTY_EDGE_TYPE,
-      title: ''
+      title: '',
+      handleText: "1",
     };
-
     setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
     setSelected(viewEdge);
   };
@@ -198,6 +199,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
         onSelectEdge={onSelectEdge}
         onCreateEdge={onCreateEdge}
         onDeleteEdge={onDeleteEdge}
+        edgeArrowSize={12}
       />
     </>
   );

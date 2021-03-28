@@ -8,10 +8,9 @@ import {
     Modal,
     Select,
 } from "antd";
-import IconBase, { SaveOutlined } from "@ant-design/icons";
+import { SaveOutlined } from "@ant-design/icons";
 import { useState, useMemo } from "react";
 import { useParams, useHistory } from "react-router-dom";
-import styled from "styled-components";
 import deepEqual from "deep-equal";
 import Layout from "@layout";
 import useAsyncEffect from "@/utils/useAsyncEffect";
@@ -24,77 +23,17 @@ import type {
 import type { ArrayElement } from "@/utils/ArrayElement";
 import { useModal } from "@components/TextModalInput";
 import StateMachineEditor from "@components/StateMachineEditor";
-import { ReactComponent as RightArrowRaw } from "@assets/right-arrow.svg";
 import { machineIsDeterministic } from "@/lib/utils";
+import { MachineEditContent, MachineEditGrid, RulesContainer, AlphabetList, AlphabetListHeader, SelectBar, NewTransitionModaContent } from "./MachineEditStyles";
 // Define Typings
 export interface ITGEditPageProps {
     id: string;
 }
-// Define Style
-const MachineEditContent = styled.section`
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-`;
-const RulesContainer = styled.div`
-    grid-area: rules;
-`;
-
-const AlphabetList = styled(List)`
-    /* Full Panel Size */
-    flex-grow: 1;
-`;
-const AlphabetListHeader = styled.header`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-`;
-const MachineEditGrid = styled.section`
-    /* Full Height */
-    flex-grow: 1;
-    /* Align center */
-    width: calc(100% - 48px);
-    margin: 1.5rem auto;
-    /* Display on Grid */
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: 4fr 4fr 2fr;
-    grid-template-rows: 1fr 5fr 6fr;
-    grid-template-areas:
-        "rules rules entry"
-        "rules rules states"
-        "rules rules alphabet";
-`;
-const RuleHead = styled.section`
-    display: flex;
-    align-items: center;
-    font-size: 1.8em;
-`;
-const RuleBody = styled.section`
-    flex-grow: 1;
-    text-align: left;
-    font-size: 1.5rem;
-`;
-const RightArrow = styled(IconBase).attrs({ component: RightArrowRaw })`
-    margin: auto 1rem;
-`;
-const NewTransitionModaContent = styled.section`
-    display: grid;
-    column-gap: 1rem;
-
-    grid-template-rows: 1fr 1fr;
-    grid-template-columns: repeat(3, 1fr);
-`;
-const SelectBar = styled.section`
-    display: flex;
-    flex-direction: column;
-`;
-
-
 // Define Page
 export default function RegularGrammarEdit(): JSX.Element {
     // Setup State
     const [machineDb, setMachineDb] = useState<MachineDBEntry>();
+    console.log('👋 machineDb é:', machineDb)
     // Get Context
     const history = useHistory();
     const { id: idToEdit } = useParams<ITGEditPageProps>();
@@ -105,22 +44,17 @@ export default function RegularGrammarEdit(): JSX.Element {
         setMachineDb(machinerEntry);
     }, []);
     // Define Computed Values
+    const alphabet = useMemo(() => machineDb?.entryAlphabet, [machineDb?.entryAlphabet]);
     const states = useMemo(() => machineDb?.states ?? [], [machineDb?.states]);
-    const alphabet = useMemo(() => machineDb?.entryAlphabet, [
-        machineDb?.entryAlphabet,
-    ]);
-    const transitions = useMemo(() => machineDb?.transitions, [
-        machineDb?.transitions,
-    ]);
+    const transitions = useMemo(() => machineDb?.transitions ?? [], [machineDb?.transitions]);
+
     const initialState = useMemo(
         () => machineDb?.states?.find((s) => s.isEntry)?.id,
         [machineDb?.states]
     );
     // Components Handlers
     const renameMachine = (newName: string) => {
-        setMachineDb((machine) => {
-            return { ...machine, name: newName };
-        });
+        setMachineDb(machine => ({ ...machine, name: newName }));
     };
     const saveMachine = async () => {
         // Fetch Database
@@ -139,6 +73,7 @@ export default function RegularGrammarEdit(): JSX.Element {
             return { ...machine };
         });
     };
+    
     const newTransition = ({from, to}: {from: string, to: string}) => {
         setMachineDb((machine) => {
             if (machine.transitions.findIndex((t) => t.from === from && t.to.newState === to) === -1) {
@@ -151,6 +86,37 @@ export default function RegularGrammarEdit(): JSX.Element {
             return { ...machine };
           });
         };
+
+    const addNewTransition = (from: string, to: string, withSymbol: string) => {
+        if (
+            machineDb.transitions.findIndex(
+                (t) =>
+                    t.from === from &&
+                    t.to.newState === to &&
+                    t.with.head === withSymbol
+            ) === -1
+        ) {
+            setMachineDb((machine) => {
+                machine.transitions.push({
+                    from,
+                    to: {
+                        newState: to,
+                        headDirection: null,
+                        writeSymbol: null,
+                    },
+                    with: {
+                        head: withSymbol,
+                        memory: null,
+                    },
+                });
+                return {
+                    ...machine,
+                    deterministic: machineIsDeterministic(machine),
+                };
+            });
+        }
+    };
+
     const deleteState = (stateName: string) => {
         setMachineDb((machine) => {
             const stateToDeleteIdx = machine.states.findIndex(
@@ -180,35 +146,6 @@ export default function RegularGrammarEdit(): JSX.Element {
             }
             return { ...machine };
         });
-    };
-    const addNewTransition = (from: string, to: string, withSymbol: string) => {
-        if (
-            machineDb.transitions.findIndex(
-                (t) =>
-                    t.from === from &&
-                    t.to.newState === to &&
-                    t.with.head === withSymbol
-            ) === -1
-        ) {
-            setMachineDb((machine) => {
-                machine.transitions.push({
-                    from,
-                    to: {
-                        newState: to,
-                        headDirection: null,
-                        writeSymbol: null,
-                    },
-                    with: {
-                        head: withSymbol,
-                        memory: null,
-                    },
-                });
-                return {
-                    ...machine,
-                    deterministic: machineIsDeterministic(machine),
-                };
-            });
-        }
     };
     const deleteTransition = (
         transition: ArrayElement<MachineDBEntry["transitions"]>
@@ -393,7 +330,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                             }
                             renderItem={(state: MachineDBEntryState, index) => (
                                 <List.Item
-                                    key={index}
+                                    key={index + "e"}
                                     actions={[
                                         <Checkbox
                                             key="button-exit-state"
@@ -434,7 +371,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                                 {states?.map((state) => (
                                     <Select.Option
                                         value={state.id}
-                                        key={state.id}
+                                        key={state.id + "a"}
                                     >
                                         {state.id}
                                     </Select.Option>
@@ -458,7 +395,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                             }
                             renderItem={(alphabetSymbol: string, index) => (
                                 <List.Item
-                                    key={index}
+                                    key={index + "f"}
                                     actions={[
                                         <Button
                                             onClick={() =>
@@ -514,7 +451,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                                 {states?.map((state) => (
                                     <Select.Option
                                         value={state.id}
-                                        key={state.id}
+                                        key={state.id + "b"}
                                     >
                                         {state.id}
                                     </Select.Option>
@@ -530,7 +467,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                                 {alphabet?.map((alphabetSymbol) => (
                                     <Select.Option
                                         value={alphabetSymbol}
-                                        key={alphabetSymbol}
+                                        key={alphabetSymbol + "d"}
                                     >
                                         {alphabetSymbol}
                                     </Select.Option>
@@ -544,7 +481,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                                 {states?.map((state) => (
                                     <Select.Option
                                         value={state.id}
-                                        key={state.id}
+                                        key={state.id + "c"}
                                     >
                                         {state.id}
                                     </Select.Option>
