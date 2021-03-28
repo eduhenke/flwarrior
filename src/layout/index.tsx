@@ -21,6 +21,12 @@ const RootLayout = styled(Layout)`
     min-height: 100vh;
     max-width: 100vw;
     max-height: 100vh;
+    color: red !important;
+    text.edge-text {
+      alignment-baseline: text-before-edge !important;
+      fill: red !important;
+      stroke: red !important;
+    }
 `;
 const Title = styled(TitleBase)`
     &&& {

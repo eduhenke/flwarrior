@@ -149,7 +149,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
       target: targetViewNode[NODE_KEY],
       type: EMPTY_EDGE_TYPE,
       title: '',
-      handleText: "1",
+      handleText: prompt("Adicione transição (clique \"enter\" para ε)", "ε"),
     };
     setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
     setSelected(viewEdge);

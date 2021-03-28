@@ -207,9 +207,8 @@ export default function RegularGrammarEdit(): JSX.Element {
     const [newTransFrom, setNewTransFrom] = useState<string>();
     const [newTransTo, setNewTransTo] = useState<string>();
     const [newTransWith, setNewTransWith] = useState<string>();
-    const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(
-        false
-    );
+    const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(false);
+    
     const showNewTransitionModal = () => {
         setNewTransFrom(undefined);
         setNewTransTo(undefined);

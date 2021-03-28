@@ -24,5 +24,14 @@
         "workspaceRoot": null,
         "workspacePath": null,
         "id": "1M0LqSikXA7Os4fR"
+    },
+    {
+        "type": "File",
+        "name": "src/layout/index.tsx",
+        "parent_id": "yMWEn7NHgRhdXAYk",
+        "fsPath": "src/layout/index.tsx",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "MrVn1dcNy7GUBmDA"
     }
 ]
