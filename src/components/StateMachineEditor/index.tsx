@@ -27,8 +27,8 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
   const convertStateToNode = (state: MachineDBEntryState, offset = 0): INode =>
     graph.nodes.find(node => node.id === state.id)
     ?? ({
-      id: state.id,
-      title: state.id,
+      id: "q" + offset,
+      title: "q" + offset,
       type: state.isEntry ? INITIAL_STATE_TYPE : STATE_TYPE,
       x: Math.cos(offset / 2) * Math.log2(offset + 1) * 120,
       y: Math.sin(offset / 2) * Math.log2(offset + 1) * 120,
@@ -40,21 +40,21 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
     const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(false);
 
 
-    const showNewTransitionModal = () => {
-      setNewTransFrom(undefined);
-      setNewTransTo(undefined);
+    const showNewTransitionModal = (sourceViewNode, targetViewNode) => {
+      setNewTransFrom(sourceViewNode);
+      setNewTransTo(targetViewNode);
       setNewTransWith(undefined);
       setModalNewTransitionVisible(true);
   };
 
 
-  const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge =>
-    graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
-    ?? ({
-      source: transition.from,
-      target: transition.to.newState,
-      handleText: transition.to.writeSymbol
-    })
+  const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge => {
+      return graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
+      ?? ({
+        source: transition.from,
+        target: transition.to.newState,
+        handleText: transition.to.writeSymbol
+      })}
   ;
 
   const convertGraphToMachine = (graph: IGraphInput): MachineDiagram => ({
@@ -83,7 +83,9 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
     setGraph({
       ...graph,
       nodes: states.map(convertStateToNode),
-      edges: transitions.map(convertTransitionsToEdge),
+      edges: transitions
+      .filter(transition => typeof transition.from === 'string' && typeof transition.to.newState === 'string')
+      .map(convertTransitionsToEdge),
     })
   }, [states, transitions]);
 
@@ -160,19 +162,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
 
   // Creates a new node between two edges
   const onCreateEdge = (sourceViewNode, targetViewNode) => {
-    showNewTransitionModal();
-    const viewEdge = {
-      source: sourceViewNode[NODE_KEY],
-      target: targetViewNode[NODE_KEY],
-      type: EMPTY_EDGE_TYPE,
-      title: '',
-      handleText: newTransWith,
-    };
-    if (newTransWith !== undefined) {
-      setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
-      setSelected(viewEdge);
-    }
-    setNewTransWith(undefined);
+    showNewTransitionModal(sourceViewNode, targetViewNode);
   };
 
   // Called when an edge is reattached to a different target.
@@ -210,14 +200,19 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
               disabled: newTransWith === undefined
               ,
           }}
-          onOk={() => (
-              setModalNewTransitionVisible(false)
-              // addNewTransition(
-              //     newTransFrom,
-              //     newTransTo,
-              //     newTransWith
-              // )
-          )}
+          onOk={() => {
+            const viewEdge = {
+              source: newTransFrom[NODE_KEY],
+              target: newTransTo[NODE_KEY],
+              type: EMPTY_EDGE_TYPE,
+              title: '',
+              handleText: newTransWith,
+            };
+            setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
+            setSelected(viewEdge);
+            setModalNewTransitionVisible(false)
+            setNewTransWith(undefined);              
+          }}
           onCancel={() => setModalNewTransitionVisible(false)}
       >
           <NewTransitionModaContent>
@@ -276,7 +271,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
       <Typography>Shift+Click entre estados para adicionar transições</Typography>
       <GraphView
         showGraphControls={true}
-        gridDotSize={1}
+        // gridDotSize={1}
         nodeKey={NODE_KEY}
         nodes={graph.nodes}
         edges={graph.edges}

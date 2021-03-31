@@ -31,13 +31,14 @@ export interface ITGEditPageProps {
 }
 // Define Page
 export default function RegularGrammarEdit(): JSX.Element {
-    // Setup State
-    const [machineDb, setMachineDb] = useState<MachineDBEntry>();
-    console.log('👋 machineDb é:', machineDb)
-    // Get Context
+    
     const history = useHistory();
     const { id: idToEdit } = useParams<ITGEditPageProps>();
-    // Fetch Data
+
+    const [machineDb, setMachineDb] = useState<MachineDBEntry>();
+    const [unsavedMachine, setUnsavedMachine] = useState<MachineDBEntry>();
+
+    
     useAsyncEffect(async () => {
         const db = await useDatabase();
         const machinerEntry = await db.get(FLWarriorDBTables.MACHINE, idToEdit);
@@ -59,7 +60,7 @@ export default function RegularGrammarEdit(): JSX.Element {
     const saveMachine = async () => {
         // Fetch Database
         const db = await useDatabase();
-        await db.put(FLWarriorDBTables.MACHINE, machineDb);
+        await db.put(FLWarriorDBTables.MACHINE, unsavedMachine);
     };
     const newState = (stateName: string) => {
         setMachineDb((machine) => {
@@ -231,13 +232,6 @@ export default function RegularGrammarEdit(): JSX.Element {
                             >
                                 Salvar
                             </Button>,
-                            // <Button
-                            //     key="button-new-rule"
-                            //     type="primary"
-                            //     onClick={showNewTransitionModal}
-                            // >
-                            //     Adicionar Transição
-                            // </Button>,
                         ]}
                     />
                     <MachineEditGrid>
@@ -245,35 +239,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                         <RulesContainer>
                             <StateMachineEditor
                                 onUpdate={diagram => {
-                                  // setMachineDb(prev => ({...prev, states: diagram.states, transitions: diagram.transitions}));
-                                  diagram.states
-                                    .map(state => state.id)
-                                    .filter(stateId => !states.map(state => state.id).includes(stateId))
-                                    .forEach(newState);
-
-                                  states
-                                    .map(state => state.id)
-                                    .filter(stateId => !diagram.states.map(state => state.id).includes(stateId))
-                                    .forEach(deleteState);
-
-                                  diagram.transitions
-                                    .map(transition => ({from: transition.from, to: transition.to.newState}))
-                                    .filter(newTransition => !(
-                                      transitions.reduce((hasTransition, transition) => (
-                                        hasTransition || newTransition.from === transition.from) && (newTransition.to === transition.to.newState
-                                      ), false)
-                                    ))
-                                    .forEach(newTransition);
-
-                                  transitions
-                                    .filter(newTransition => !(
-                                      diagram.transitions.reduce((hasTransition, transition) => (
-                                        hasTransition || newTransition.from === transition.from) && (newTransition.to.newState === transition.to.newState
-                                      ), false)
-                                    ))
-                                    .forEach(deleteTransition);
-
-                                    
+                                  setUnsavedMachine({...machineDb, ...diagram})
                                 }}
                                 states={states}
                                 transitions={transitions}
