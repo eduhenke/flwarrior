@@ -73,6 +73,18 @@ export default function RegularGrammarEdit(): JSX.Element {
             return { ...machine };
         });
     };
+
+    const deleteState = (stateName: string) => {
+      setMachineDb((machine) => {
+        const stateToDeleteIdx = machine.states.findIndex(
+            (s) => s.id === stateName
+        );
+        if (stateToDeleteIdx >= 0) {
+            machine.states.splice(stateToDeleteIdx, 1);
+        }
+        return { ...machine };
+      });
+    };
     
     const newTransition = ({from, to}: {from: string, to: string}) => {
         setMachineDb((machine) => {
@@ -117,17 +129,6 @@ export default function RegularGrammarEdit(): JSX.Element {
         }
     };
 
-    const deleteState = (stateName: string) => {
-        setMachineDb((machine) => {
-            const stateToDeleteIdx = machine.states.findIndex(
-                (s) => s.id === stateName
-            );
-            if (stateToDeleteIdx >= 0) {
-                machine.states.splice(stateToDeleteIdx, 1);
-            }
-            return { ...machine };
-        });
-    };
     const addAlphabetSymbol = (newSymbol: string) => {
         setMachineDb((machine) => {
             if (!machine.entryAlphabet.includes(newSymbol)) {
@@ -204,17 +205,7 @@ export default function RegularGrammarEdit(): JSX.Element {
         submitText: "Renomear",
         submitDisabled: (ci) => !(ci.length >= 1),
     });
-    const [newTransFrom, setNewTransFrom] = useState<string>();
-    const [newTransTo, setNewTransTo] = useState<string>();
-    const [newTransWith, setNewTransWith] = useState<string>();
-    const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(false);
-    
-    const showNewTransitionModal = () => {
-        setNewTransFrom(undefined);
-        setNewTransTo(undefined);
-        setNewTransWith(undefined);
-        setModalNewTransitionVisible(true);
-    };
+
     // Render Page
     return (
         <>
@@ -240,13 +231,13 @@ export default function RegularGrammarEdit(): JSX.Element {
                             >
                                 Salvar
                             </Button>,
-                            <Button
-                                key="button-new-rule"
-                                type="primary"
-                                onClick={showNewTransitionModal}
-                            >
-                                Adicionar Transição
-                            </Button>,
+                            // <Button
+                            //     key="button-new-rule"
+                            //     type="primary"
+                            //     onClick={showNewTransitionModal}
+                            // >
+                            //     Adicionar Transição
+                            // </Button>,
                         ]}
                     />
                     <MachineEditGrid>
@@ -259,6 +250,12 @@ export default function RegularGrammarEdit(): JSX.Element {
                                     .map(state => state.id)
                                     .filter(stateId => !states.map(state => state.id).includes(stateId))
                                     .forEach(newState);
+
+                                  states
+                                    .map(state => state.id)
+                                    .filter(stateId => !diagram.states.map(state => state.id).includes(stateId))
+                                    .forEach(deleteState);
+
                                   diagram.transitions
                                     .map(transition => ({from: transition.from, to: transition.to.newState}))
                                     .filter(newTransition => !(
@@ -267,10 +264,20 @@ export default function RegularGrammarEdit(): JSX.Element {
                                       ), false)
                                     ))
                                     .forEach(newTransition);
+
+                                  transitions
+                                    .filter(newTransition => !(
+                                      diagram.transitions.reduce((hasTransition, transition) => (
+                                        hasTransition || newTransition.from === transition.from) && (newTransition.to.newState === transition.to.newState
+                                      ), false)
+                                    ))
+                                    .forEach(deleteTransition);
+
                                     
                                 }}
                                 states={states}
                                 transitions={transitions}
+                                alphabet={alphabet}
                             />
                         </RulesContainer>
                         {/* <RulesList
@@ -413,81 +420,6 @@ export default function RegularGrammarEdit(): JSX.Element {
                             )}
                         />
                     </MachineEditGrid>
-                    <Modal
-                        title="Adicionar nova transição"
-                        centered
-                        visible={modalNewTransitionVisible}
-                        okText="Adicionar"
-                        cancelText="Cancelar"
-                        okButtonProps={{
-                            disabled: !(
-                                newTransFrom?.length > 0 &&
-                                newTransWith?.length > 0 &&
-                                newTransTo?.length > 0
-                            ),
-                        }}
-                        onOk={() => (
-                            setModalNewTransitionVisible(false),
-                            addNewTransition(
-                                newTransFrom,
-                                newTransTo,
-                                newTransWith
-                            )
-                        )}
-                        onCancel={() => setModalNewTransitionVisible(false)}
-                    >
-                        <NewTransitionModaContent>
-                            <Typography.Text>De (Estado):</Typography.Text>
-                            <Typography.Text>Lendo (Símbolo):</Typography.Text>
-                            <Typography.Text>Para (Estado):</Typography.Text>
-                            <Select
-                                value={newTransFrom}
-                                defaultActiveFirstOption
-                                onChange={(from) =>
-                                    setNewTransFrom(from.toString())
-                                }
-                            >
-                                {states?.map((state) => (
-                                    <Select.Option
-                                        value={state.id}
-                                        key={state.id + "b"}
-                                    >
-                                        {state.id}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                            <Select
-                                value={newTransWith}
-                                defaultActiveFirstOption
-                                onChange={(withSymbol) =>
-                                    setNewTransWith(withSymbol.toString())
-                                }
-                            >
-                                {alphabet?.map((alphabetSymbol) => (
-                                    <Select.Option
-                                        value={alphabetSymbol}
-                                        key={alphabetSymbol + "d"}
-                                    >
-                                        {alphabetSymbol}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                            <Select
-                                defaultActiveFirstOption
-                                value={newTransTo}
-                                onChange={(to) => setNewTransTo(to.toString())}
-                            >
-                                {states?.map((state) => (
-                                    <Select.Option
-                                        value={state.id}
-                                        key={state.id + "c"}
-                                    >
-                                        {state.id}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        </NewTransitionModaContent>
-                    </Modal>
                 </MachineEditContent>
             </Layout>
         </>
