@@ -84,7 +84,13 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
       ...graph,
       nodes: states.map(convertStateToNode),
       edges: transitions
-      .filter(transition => typeof transition.from === 'string' && typeof transition.to.newState === 'string')
+      .filter(
+        transition =>
+          typeof transition.from === 'string' &&
+          typeof transition.to.newState === 'string' &&
+          states.map(state => state.id).includes(transition.from) &&
+          states.map(state => state.id).includes(transition.to.newState)
+      )
       .map(convertTransitionsToEdge),
     })
   }, [states, transitions]);
