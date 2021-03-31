@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { GraphView, INode, IGraphInput, IEdge } from "react-digraph";
-import { Typography } from 'antd';
+import { Modal, Select, Typography } from 'antd';
 import { MachineDBEntry, MachineDBEntryState, MachineType } from '@database/schema/machine';
 import {
   default as nodeConfig,
@@ -9,6 +9,7 @@ import {
   NODE_KEY,
   INITIAL_STATE_TYPE,
 } from "./config";
+import { NewTransitionModaContent } from "../../pages/automata/finite/MachineEditStyles";
 
 type MachineDiagram = Pick<MachineDBEntry, 'states' | 'transitions'>;
 type MachineDBEntryTransition = MachineDBEntry["transitions"][number];
@@ -17,9 +18,10 @@ type Props = {
   onUpdate: (machine: MachineDiagram) => void,
   states: MachineDBEntryState[]
   transitions: MachineDBEntryTransition[]
+  alphabet: string[]
 }
 
-export default function StateMachineEditor({ onUpdate, states = [], transitions = [] }: Props) {
+export default function StateMachineEditor({ onUpdate, states = [], transitions = [], alphabet }: Props) {
   const [graph, setGraph] = useState<IGraphInput>({ edges: [], nodes: [] });
   const [selected, setSelected] = useState<INode | undefined>();
   const convertStateToNode = (state: MachineDBEntryState, offset = 0): INode =>
@@ -31,6 +33,20 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
       x: Math.cos(offset / 2) * Math.log2(offset + 1) * 120,
       y: Math.sin(offset / 2) * Math.log2(offset + 1) * 120,
     });
+
+    const [newTransFrom, setNewTransFrom] = useState<string>();
+    const [newTransTo, setNewTransTo] = useState<string>();
+    const [newTransWith, setNewTransWith] = useState<string>();
+    const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(false);
+
+
+    const showNewTransitionModal = () => {
+      setNewTransFrom(undefined);
+      setNewTransTo(undefined);
+      setNewTransWith(undefined);
+      setModalNewTransitionVisible(true);
+  };
+
 
   const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge =>
     graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
@@ -144,15 +160,19 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
 
   // Creates a new node between two edges
   const onCreateEdge = (sourceViewNode, targetViewNode) => {
+    showNewTransitionModal();
     const viewEdge = {
       source: sourceViewNode[NODE_KEY],
       target: targetViewNode[NODE_KEY],
       type: EMPTY_EDGE_TYPE,
       title: '',
-      handleText: prompt("Adicione transição (clique \"enter\" para ε)", "ε"),
+      handleText: newTransWith,
     };
-    setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
-    setSelected(viewEdge);
+    if (newTransWith !== undefined) {
+      setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
+      setSelected(viewEdge);
+    }
+    setNewTransWith(undefined);
   };
 
   // Called when an edge is reattached to a different target.
@@ -180,6 +200,78 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
 
   return (
     <>
+      <Modal
+          title="Adicionar nova transição"
+          centered
+          visible={modalNewTransitionVisible}
+          okText="Adicionar"
+          cancelText="Cancelar"
+          okButtonProps={{
+              disabled: newTransWith === undefined
+              ,
+          }}
+          onOk={() => (
+              setModalNewTransitionVisible(false)
+              // addNewTransition(
+              //     newTransFrom,
+              //     newTransTo,
+              //     newTransWith
+              // )
+          )}
+          onCancel={() => setModalNewTransitionVisible(false)}
+      >
+          <NewTransitionModaContent>
+              {/* <Typography.Text>De (Estado):</Typography.Text> */}
+              <Typography.Text>Lendo (Símbolo):</Typography.Text>
+              {/* <Typography.Text>Para (Estado):</Typography.Text> */}
+              {/* <Select
+                  value={newTransFrom}
+                  defaultActiveFirstOption
+                  onChange={(from) =>
+                      setNewTransFrom(from.toString())
+                  }
+              >
+                  {states?.map((state) => (
+                      <Select.Option
+                          value={state.id}
+                          key={state.id + "b"}
+                      >
+                          {state.id}
+                      </Select.Option>
+                  ))}
+              </Select> */}
+              <Select
+                  value={newTransWith}
+                  defaultActiveFirstOption
+                  onChange={(withSymbol) =>
+                      setNewTransWith(withSymbol.toString())
+                  }
+              >
+                  {alphabet?.map((alphabetSymbol) => (
+                      <Select.Option
+                          value={alphabetSymbol}
+                          key={alphabetSymbol + "d"}
+                      >
+                          {alphabetSymbol}
+                      </Select.Option>
+                  ))}
+              </Select>
+              {/* <Select
+                  defaultActiveFirstOption
+                  value={newTransTo}
+                  onChange={(to) => setNewTransTo(to.toString())}
+              >
+                  {states?.map((state) => (
+                      <Select.Option
+                          value={state.id}
+                          key={state.id + "c"}
+                      >
+                          {state.id}
+                      </Select.Option>
+                  ))}
+              </Select> */}
+          </NewTransitionModaContent>
+      </Modal>
       <Typography>Shift+Click para adicionar estados</Typography>
       <Typography>Shift+Click entre estados para adicionar transições</Typography>
       <GraphView
