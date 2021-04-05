@@ -77,7 +77,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
   console.log({ graph })
   useEffect(() => {
     onUpdate(convertGraphToMachine(graph));
-  }, [graph]);
+  }, [graph, graph.edges]);
 
   useEffect(() => {
     setGraph({
@@ -88,8 +88,11 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
         transition =>
           typeof transition.from === 'string' &&
           typeof transition.to.newState === 'string' &&
-          states.map(state => state.id).includes(transition.from) &&
-          states.map(state => state.id).includes(transition.to.newState)
+          states.filter(
+            state =>
+              state.id === transition.from ||
+              state.id === transition.to.newState
+          ).length
       )
       .map(convertTransitionsToEdge),
     })
