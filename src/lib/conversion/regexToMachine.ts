@@ -57,7 +57,7 @@ function* generateIds() {
     let currId = 0;
     while (true) {
         currId += 1;
-        yield currId;
+        yield `q${currId}`;
     }
 }
 
@@ -207,7 +207,7 @@ export const searchForConcatenations = (
 
 export const createNode = (
     arr: RecursiveArray<string>,
-    idGen: Generator<number>
+    idGen: Generator<string>
 ): ITreeNode => {
     const opCode = { "*": -1, "|": -2, "•": -3 };
     if (arr.length === 3) {
