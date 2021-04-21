@@ -7,7 +7,11 @@
         "prettier/@typescript-eslint",
         "prettier/react"
     ],
-    "plugins": ["prettier", "@typescript-eslint", "import"],
+    "plugins": [
+        "prettier",
+        "@typescript-eslint",
+        "import"
+    ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 2021,
@@ -15,21 +19,34 @@
         "ecmaFeatures": {
             "jsx": true
         },
-        "project": ["tsconfig.json", "tsconfig.build.json"]
+        "project": [
+            "tsconfig.json",
+            "tsconfig.build.json"
+        ]
     },
     "rules": {
         "react/jsx-uses-react": "off",
         "react/react-in-jsx-scope": "off",
         "react/prop-types": "off",
-        "no-restricted-syntax": ["error", "LabeledStatement", "WithStatement"],
+        "no-restricted-syntax": [
+            "error",
+            "LabeledStatement",
+            "WithStatement"
+        ],
         "no-sequences": "off",
         "react/require-default-props": [
             "error",
-            { "ignoreFunctionalComponents": true }
+            {
+                "ignoreFunctionalComponents": true
+            }
         ],
-        "prettier/prettier": 0
+        "prettier/prettier": 0,
+        "no-plusplus": "off"
     },
     "settings": {
-        "import/ignore": [".(scss|less|css)$", ".svg$"]
+        "import/ignore": [
+            ".(scss|less|css)$",
+            ".svg$"
+        ]
     }
 }

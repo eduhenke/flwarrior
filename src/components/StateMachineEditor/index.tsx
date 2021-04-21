@@ -8,70 +8,89 @@ import {
   STATE_TYPE,
   NODE_KEY,
   INITIAL_STATE_TYPE,
+  INITIAL_AND_EXIT_STATE_TYPE,
+  EXIT_STATE_TYPE,
 } from "./config";
 import { NewTransitionModaContent } from "../../pages/automata/finite/MachineEditStyles";
+import { IITransition, IMachine, ITransition } from '@/lib/automaton/Machine';
+import { IState } from '@/lib/automaton/State';
+import { IIState } from '@/lib/automaton/State';
+import { Map, Set } from "immutable";
 
 type MachineDiagram = Pick<MachineDBEntry, 'states' | 'transitions'>;
 type MachineDBEntryTransition = MachineDBEntry["transitions"][number];
 
 type Props = {
-  onUpdate: (machine: MachineDiagram) => void,
-  states: MachineDBEntryState[]
-  transitions: MachineDBEntryTransition[]
-  alphabet: string[]
+  onUpdate: (machine: Pick<IMachine, 'states' | 'transitions'>) => void,
+  states: IMachine['states']
+  transitions: IMachine['transitions']
+  alphabet: IMachine['alphabet']
 }
 
-export default function StateMachineEditor({ onUpdate, states = [], transitions = [], alphabet }: Props) {
+export default function StateMachineEditor({ onUpdate, states = Map(), transitions = Set(), alphabet }: Props) {
   const [graph, setGraph] = useState<IGraphInput>({ edges: [], nodes: [] });
   const [selected, setSelected] = useState<INode | undefined>();
-  const convertStateToNode = (state: MachineDBEntryState, offset = 0): INode =>
-    graph.nodes.find(node => node.id === state.id)
-    ?? ({
+  const convertStateToNode = (state: IIState, offset = 0): INode => {
+    const oldNode = graph.nodes.find(node => node.id === state.get('id'));
+    const type = state.get('isEntry') && state.get('isExit')
+      ? INITIAL_AND_EXIT_STATE_TYPE
+      : state.get('isEntry')
+        ? INITIAL_STATE_TYPE
+        : state.get('isExit')
+          ? EXIT_STATE_TYPE
+          : STATE_TYPE;
+
+    if (!oldNode) return {
       id: "q" + offset,
       title: "q" + offset,
-      type: state.isEntry ? INITIAL_STATE_TYPE : STATE_TYPE,
+      type,
       x: Math.cos(offset / 2) * Math.log2(offset + 1) * 120,
       y: Math.sin(offset / 2) * Math.log2(offset + 1) * 120,
-    });
+    };
+    return { ...oldNode, type };
+  };
 
-    const [newTransFrom, setNewTransFrom] = useState<string>();
-    const [newTransTo, setNewTransTo] = useState<string>();
-    const [newTransWith, setNewTransWith] = useState<string>();
-    const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(false);
+  const [newTransFrom, setNewTransFrom] = useState<string>();
+  const [newTransTo, setNewTransTo] = useState<string>();
+  const [newTransWith, setNewTransWith] = useState<string>();
+  const [modalNewTransitionVisible, setModalNewTransitionVisible] = useState(false);
 
 
-    const showNewTransitionModal = (sourceViewNode, targetViewNode) => {
-      setNewTransFrom(sourceViewNode);
-      setNewTransTo(targetViewNode);
-      setNewTransWith(undefined);
-      setModalNewTransitionVisible(true);
+  const showNewTransitionModal = (sourceViewNode, targetViewNode) => {
+    setNewTransFrom(sourceViewNode);
+    setNewTransTo(targetViewNode);
+    setNewTransWith(undefined);
+    setModalNewTransitionVisible(true);
   };
 
 
-  const convertTransitionsToEdge = (transition: MachineDBEntryTransition): IEdge => {
-      return graph.edges.find(edge => edge.source === transition.from && edge.target === transition.to.newState)
+  const convertTransitionsToEdge = (transition: IITransition): IEdge => {
+    return graph.edges.find(edge => edge.source === transition.get('from') && edge.target === transition.get('to'))
       ?? ({
-        source: transition.from,
-        target: transition.to.newState,
-        handleText: transition.to.writeSymbol
-      })}
-  ;
+        source: transition.get('from'),
+        target: transition.get('to'),
+        handleText: transition.get('with')
+      })
+  }
+    ;
 
-  const convertGraphToMachine = (graph: IGraphInput): MachineDiagram => ({
-    states: graph.nodes.map(
-      node => ({
+  const convertGraphToMachine = (graph: IGraphInput): Pick<IMachine, 'states' | 'transitions'> => ({
+    states: Map(graph.nodes.map(node =>
+      [node.title, Map({
         id: node.title,
-        isEntry: node.type === INITIAL_STATE_TYPE,
-        isExit: false
-      })
-    ),
-    transitions: graph.edges.map(
-      edge => ({
+        isEntry: node.type === INITIAL_STATE_TYPE || node.type === INITIAL_AND_EXIT_STATE_TYPE,
+        isExit: node.type === EXIT_STATE_TYPE || node.type === INITIAL_AND_EXIT_STATE_TYPE
+      }) as IIState]
+    )),
+    transitions: Set(graph.edges.map(
+      edge => Map({
         from: edge.source,
-        to: { headDirection: 'right', writeSymbol: edge.handleText, newState: edge.target },
-        with: { head: '', memory: '' }
-      })
-    ),
+        to: edge.target,
+        // to: { headDirection: 'right', writeSymbol: edge.handleText, newState: edge.target },
+        // with: { head: '', memory: '' }
+        with: edge.handleText,
+      }) as IITransition
+    )),
   })
 
   console.log({ graph })
@@ -80,21 +99,23 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
   }, [graph, graph.edges]);
 
   useEffect(() => {
+    console.log('updating graph', { states, transitions })
     setGraph({
       ...graph,
-      nodes: states.map(convertStateToNode),
+      nodes: states.toList().map(convertStateToNode).toArray(),
       edges: transitions
-      .filter(
-        transition =>
-          typeof transition.from === 'string' &&
-          typeof transition.to.newState === 'string' &&
-          states.filter(
-            state =>
-              state.id === transition.from ||
-              state.id === transition.to.newState
-          ).length
-      )
-      .map(convertTransitionsToEdge),
+        .toList()
+        .filter(
+          transition =>
+            typeof transition.get('from') === 'string' &&
+            typeof transition.get('to') === 'string' &&
+            states.filter(
+              state =>
+                state.get('id') === transition.get('from') ||
+                state.get('id') === transition.get('to')
+            ).toArray().length
+        )
+        .map(convertTransitionsToEdge).toArray(),
     })
   }, [states, transitions]);
 
@@ -200,35 +221,35 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
   return (
     <>
       <Modal
-          title="Adicionar nova transição"
-          centered
-          visible={modalNewTransitionVisible}
-          okText="Adicionar"
-          cancelText="Cancelar"
-          okButtonProps={{
-              disabled: newTransWith === undefined
-              ,
-          }}
-          onOk={() => {
-            const viewEdge = {
-              source: newTransFrom[NODE_KEY],
-              target: newTransTo[NODE_KEY],
-              type: EMPTY_EDGE_TYPE,
-              title: '',
-              handleText: newTransWith,
-            };
-            setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
-            setSelected(viewEdge);
-            setModalNewTransitionVisible(false)
-            setNewTransWith(undefined);              
-          }}
-          onCancel={() => setModalNewTransitionVisible(false)}
+        title="Adicionar nova transição"
+        centered
+        visible={modalNewTransitionVisible}
+        okText="Adicionar"
+        cancelText="Cancelar"
+        okButtonProps={{
+          disabled: newTransWith === undefined
+          ,
+        }}
+        onOk={() => {
+          const viewEdge = {
+            source: newTransFrom[NODE_KEY],
+            target: newTransTo[NODE_KEY],
+            type: EMPTY_EDGE_TYPE,
+            title: '',
+            handleText: newTransWith,
+          };
+          setGraph({ ...graph, edges: [...graph.edges, viewEdge] });
+          setSelected(viewEdge);
+          setModalNewTransitionVisible(false)
+          setNewTransWith(undefined);
+        }}
+        onCancel={() => setModalNewTransitionVisible(false)}
       >
-          <NewTransitionModaContent>
-              {/* <Typography.Text>De (Estado):</Typography.Text> */}
-              <Typography.Text>Lendo (Símbolo):</Typography.Text>
-              {/* <Typography.Text>Para (Estado):</Typography.Text> */}
-              {/* <Select
+        <NewTransitionModaContent>
+          {/* <Typography.Text>De (Estado):</Typography.Text> */}
+          <Typography.Text>Lendo (Símbolo):</Typography.Text>
+          {/* <Typography.Text>Para (Estado):</Typography.Text> */}
+          {/* <Select
                   value={newTransFrom}
                   defaultActiveFirstOption
                   onChange={(from) =>
@@ -244,23 +265,23 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
                       </Select.Option>
                   ))}
               </Select> */}
-              <Select
-                  value={newTransWith}
-                  defaultActiveFirstOption
-                  onChange={(withSymbol) =>
-                      setNewTransWith(withSymbol.toString())
-                  }
+          <Select
+            value={newTransWith}
+            defaultActiveFirstOption
+            onChange={(withSymbol) =>
+              setNewTransWith(withSymbol.toString())
+            }
+          >
+            {alphabet?.map((alphabetSymbol) => (
+              <Select.Option
+                value={alphabetSymbol}
+                key={alphabetSymbol + "d"}
               >
-                  {alphabet?.map((alphabetSymbol) => (
-                      <Select.Option
-                          value={alphabetSymbol}
-                          key={alphabetSymbol + "d"}
-                      >
-                          {alphabetSymbol}
-                      </Select.Option>
-                  ))}
-              </Select>
-              {/* <Select
+                {alphabetSymbol}
+              </Select.Option>
+            ))}
+          </Select>
+          {/* <Select
                   defaultActiveFirstOption
                   value={newTransTo}
                   onChange={(to) => setNewTransTo(to.toString())}
@@ -274,7 +295,7 @@ export default function StateMachineEditor({ onUpdate, states = [], transitions 
                       </Select.Option>
                   ))}
               </Select> */}
-          </NewTransitionModaContent>
+        </NewTransitionModaContent>
       </Modal>
       <Typography>Shift+Click para adicionar estados</Typography>
       <Typography>Shift+Click entre estados para adicionar transições</Typography>
