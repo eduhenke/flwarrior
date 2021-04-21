@@ -12,18 +12,8 @@ export type Rules<Token extends string> = OrderedMap<Token, IIRegex>;
 type Lexeme = string;
 
 
-export const accepts = (machine: IIMachine, word: string): boolean => {
-  let gen = nextStep(machine, word);
-  let done = false;
-  let accepts = false;
-  while (!done) {
-    const val = gen.next();
-    done = val.done;
-    if (val.done)
-      accepts = val.value;
-  }
-  return accepts;
-}
+export const accepts = (machine: IIMachine, word: string): boolean =>
+  word.length === [...nextStep(machine, word)].length;
 
 export const analyze = <Token extends string>(rules: Rules<Token>, sourceCode: string): Array<[Lexeme, Token]> => {
   const lexemes: Lexeme[] = sourceCode
@@ -41,7 +31,7 @@ export const analyze = <Token extends string>(rules: Rules<Token>, sourceCode: s
   for (const lexeme of lexemes) {
     for (const [token, machine] of machines.entries()) {
       const accepted = accepts(machine, lexeme);
-      console.log('checking if machine accepts', { lexeme, token, accepted, machine: machine.toJS() })
+      // console.log('checking if machine accepts', { lexeme, token, accepted, machine: machine.toJS() })
       if (accepted) {
         result.push([lexeme, token]);
         // TODO: what if there's more than one possible token?
