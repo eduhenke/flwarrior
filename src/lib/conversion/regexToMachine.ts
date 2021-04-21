@@ -19,6 +19,8 @@ export enum EASTOperators {
     OR = "|",
     CLOJURE = "*",
 }
+const ESCAPE_CHARACTER = "\\";
+
 export interface IAhoSyntaxTreeNode {
     id: number;
     type: EASTNodeType;
@@ -68,6 +70,8 @@ export const searchForParentheses = (
     let nestedCount = 0;
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
+        if (i > 0 && tokens[i - 1] == ESCAPE_CHARACTER)
+            continue;
         if (token === "(") {
             if (nestedCount === 0) {
                 // First Nested Scope
@@ -157,7 +161,7 @@ export const searchForOr = (
                     : leftBase;
             const right =
                 rightTransformed.length === 1 &&
-                Array.isArray(rightTransformed[0])
+                    Array.isArray(rightTransformed[0])
                     ? rightTransformed[0]
                     : rightTransformed;
             // Return Array
@@ -220,32 +224,32 @@ export const createNode = (
                 op === EASTOperators.CLOJURE
                     ? true
                     : op === EASTOperators.OR
-                    ? left.nullable || right.nullable
-                    : left.nullable && right.nullable,
+                        ? left.nullable || right.nullable
+                        : left.nullable && right.nullable,
             firstPos:
                 op === EASTOperators.CLOJURE
                     ? [...left.firstPos]
                     : op === EASTOperators.OR
-                    ? Immutable.Set(left.firstPos)
-                          .union(Immutable.Set(right.firstPos))
-                          .toArray()
-                    : left.nullable
-                    ? Immutable.Set(left.firstPos)
-                          .union(Immutable.Set(right.firstPos))
-                          .toArray()
-                    : [...left.firstPos],
+                        ? Immutable.Set(left.firstPos)
+                            .union(Immutable.Set(right.firstPos))
+                            .toArray()
+                        : left.nullable
+                            ? Immutable.Set(left.firstPos)
+                                .union(Immutable.Set(right.firstPos))
+                                .toArray()
+                            : [...left.firstPos],
             lastPos:
                 op === EASTOperators.CLOJURE
                     ? [...left.lastPos]
                     : op === EASTOperators.OR
-                    ? Immutable.Set(right.lastPos)
-                          .union(Immutable.Set(left.lastPos))
-                          .toArray()
-                    : right.nullable
-                    ? Immutable.Set(right.lastPos)
-                          .union(Immutable.Set(left.lastPos))
-                          .toArray()
-                    : [...right.lastPos],
+                        ? Immutable.Set(right.lastPos)
+                            .union(Immutable.Set(left.lastPos))
+                            .toArray()
+                        : right.nullable
+                            ? Immutable.Set(right.lastPos)
+                                .union(Immutable.Set(left.lastPos))
+                                .toArray()
+                            : [...right.lastPos],
         };
     }
     if (arr.length === 2) {
@@ -357,22 +361,27 @@ export const getAlphabetOfExpression = (
 ): Array<string> => {
     return expressionStr
         .split("")
-        .filter((str) => !["(", ")", "|", "*", "•"].includes(str));
+        .filter((str, i, exprs) => {
+            if (!["(", ")", "|", "*", "•", ESCAPE_CHARACTER].includes(str))
+                return true;
+            if (i > 0 && exprs[i - 1] == ESCAPE_CHARACTER)
+                return true;
+            return false;
+        });
 };
 
 // Define Converions
-export default function convertFiniteStateMachineToRegularGrammar(
+export default function convertRegularExpressionToNonDeterministicFiniteMachine(
     regex: IIRegex
 ): IIMachine {
     // Get Expression
     const expression = (regex.get("expression") as string)
         .replace(/ /g, "")
         .replace(/&/g, EPSILON);
-    console.log("converting", expression);
     // Get Alphabet
     const alphabet = getAlphabetOfExpression(expression);
     // Parse as Aho Tree
-    const tree = buildAhoTree(expression);
+    const tree = buildAhoTree(expression.replace(ESCAPE_CHARACTER, ''));
     // Define Transitions
     let transitions = Immutable.Set<IITransition>();
     const leafNodes = getLeafNodes(tree);
@@ -380,6 +389,7 @@ export default function convertFiniteStateMachineToRegularGrammar(
     const dstates: Array<[dstate: Array<number>, visited: boolean]> = [
         [tree.firstPos.sort(), false],
     ];
+    // console.log({ alphabet, expression, tree, leafNodes, entry, dstates })
     while (dstates.filter(([, visited]) => !visited).length > 0) {
         const stateIdx = dstates.findIndex(([, v]) => !v);
         const state = dstates[stateIdx];
@@ -413,6 +423,7 @@ export default function convertFiniteStateMachineToRegularGrammar(
             );
         }
     }
+    // console.log({ transitions: transitions.toJS() })
     const lastId = tree.lastPos.sort().join("");
     const states = Immutable.Set(
         dstates.map(([stateArr]) => {

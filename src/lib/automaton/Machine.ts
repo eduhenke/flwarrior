@@ -47,7 +47,7 @@ export const addState = (machine: IIMachine, newState: IState): IIMachine =>
         // console.debug(`[Machine] Adding state ${newState.id}`);
         return states.find((_, v) => v === newState.id)
             ? // ? new Error("State Already Exists!")
-              states
+            states
             : states.set(newState.id, Immutable.Map(newState) as IIState);
     });
 
@@ -477,10 +477,10 @@ export const removeDeadStates = (machine: IIMachine): IIMachine => {
             (notDeads, transition) =>
                 transition.get("from") !== transition.get("to")
                     ? notDeads.add(
-                          (machine.get("states") as IMachine["states"]).get(
-                              transition.get("from")
-                          )
-                      )
+                        (machine.get("states") as IMachine["states"]).get(
+                            transition.get("from")
+                        )
+                    )
                     : notDeads,
             Immutable.Set<IIState>()
         )
@@ -1103,7 +1103,7 @@ export const minimize = (machine: IIMachine): IIMachine => {
 export function* nextStep(
     machine: IIMachine,
     word: string // the whole string
-): Generator<IITransition> {
+): Generator<IITransition, boolean> {
     if (!isMachineDeterministic(machine)) {
         console.error(
             "step by step disabled on non-deterministic function. return false."
@@ -1242,8 +1242,8 @@ export const toDBEntry = (machine: IIMachine): MachineDBEntry => {
                 headDirection: (t.pop
                     ? "left"
                     : t.push
-                    ? "right"
-                    : null) as MachineMemoryDirection,
+                        ? "right"
+                        : null) as MachineMemoryDirection,
             },
         })),
         type: intermediate.type,
