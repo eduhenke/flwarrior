@@ -1,8 +1,6 @@
 
-import { analyze, Rules } from './lexycal-analyzer';
-import { getNewGrammar } from '@/database/schema/grammar';
-import { GrammarType } from '@/database/schema/grammar';
-import { Map } from 'immutable';
+import { analyze } from './lexycal-analyzer';
+import { OrderedMap } from 'immutable';
 import { ExpressionType, getNewExpression } from '@/database/schema/expression';
 import { setExpression, fromDBEntry, IIRegex } from './expressions/Regex';
 
@@ -12,31 +10,19 @@ const numbers = '0123456789'.split('');
 const alphabet = lowerAlphabet.concat(upperAlphabet);
 const alphaNumeric = alphabet.concat(numbers);
 
-const createRules = <Token extends string>(labeledExpressions: Record<Token, string>): Rules<Token> =>
-  Map(
-    Object.fromEntries(
-      Object
-        .entries(labeledExpressions)
-        .map(
-          ([key, value]) =>
-            [
-              key as any as Token,
-              setExpression(fromDBEntry(getNewExpression(ExpressionType.REGULAR)), value as string)
-            ]
-        )
-    )
-  ) as Rules<Token>;
+const getExpressionFromString = (expression: string): IIRegex =>
+  setExpression(fromDBEntry(getNewExpression(ExpressionType.REGULAR)), expression as string);
 
-const rules = createRules({
+const rules = OrderedMap({
   if: 'if',
   type: '(int|double|float)',
-  identifier: `(${alphabet.join('|')})`,
+  identifier: `(${alphabet.join('|')})(${alphaNumeric.join('|')})*`,
   openparen: '\\(',
   closeparen: '\\)',
   openblock: '{',
   closeblock: '}',
   literal: `(${numbers.join('|')})*`,
-})
+}).map(getExpressionFromString);
 
 test('analyzes correctly', () => {
   expect(analyze(rules, 'if')).toMatchObject([
@@ -53,5 +39,12 @@ int a ( ) {
     ['int', 'type'],
     ['a', 'identifier'],
     ['(', 'openparen'],
+    [')', 'closeparen'],
+    ['{', 'openblock'],
+    ['printf', 'identifier'],
+    ['(', 'openparen'],
+    ['2021', 'literal'],
+    [')', 'closeparen'],
+    ['}', 'closeblock'],
   ]);
 })

@@ -382,7 +382,6 @@ export default function convertRegularExpressionToNonDeterministicFiniteMachine(
         .replace(/&/g, EPSILON);
     // Parse as Aho Tree
     const tree = buildAhoTree(expression);
-    console.log(tree);
     // Define Transitions
     let transitions = Immutable.Set<IITransition>();
     // Get Leaf Nodes
