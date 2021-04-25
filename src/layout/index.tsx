@@ -25,7 +25,7 @@ const RootLayout = styled(Layout)`
 const Title = styled(TitleBase)`
     &&& {
         color: ${(props) =>
-            props.theme === "dark" ? "@primary-color" : "#FFFFFF"};
+        props.theme === "dark" ? "@primary-color" : "#FFFFFF"};
     }
 `;
 const Header = styled(HeaderBase)`
@@ -91,6 +91,9 @@ const AppLayout: FunctionComponent = ({ children }) => {
                             <Link to="/expressions/regular">Regulares</Link>
                         </MenuItem>
                     </SubMenu>
+                    <MenuItem>
+                        <Link to="/lexical-analyzer">Analizador léxico</Link>
+                    </MenuItem>
                 </Menu>
             </Sider>
             <Layout>
