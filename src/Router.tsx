@@ -8,6 +8,7 @@ import FiniteAutomataEditPage from "@pages/automata/finite/edit";
 import RegularGrammarsPage from "@pages/grammars/regular";
 import RegularGrammarEditPage from "@pages/grammars/regular/edit";
 import RegularExpressionsPage from "@pages/expressions/regular";
+import LexicalParser from "@pages/lexical-parser";
 // Define Component
 export default function Router(): JSX.Element {
     return (
@@ -40,6 +41,10 @@ export default function Router(): JSX.Element {
                     <Route path="/expressions/regular" exact>
                         <Helmet title="Expressões Regulares - FL Warrior" />
                         <RegularExpressionsPage />
+                    </Route>
+                    <Route path="/lexical-parser" exact>
+                        <Helmet title="Parseador léxico" />
+                        <LexicalParser />
                     </Route>
                 </Switch>
             </BrowserRouter>

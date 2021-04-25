@@ -97,6 +97,9 @@ const AppLayout: FunctionComponent = ({ children }) => {
                             <Link to="/expressions/regular">Regulares</Link>
                         </MenuItem>
                     </SubMenu>
+                    <MenuItem>
+                        <Link to="/lexical-parser">Parseador léxico</Link>
+                    </MenuItem>                    
                 </Menu>
             </Sider>
             <Layout>
