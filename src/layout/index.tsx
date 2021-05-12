@@ -82,6 +82,9 @@ const AppLayout: FunctionComponent = ({ children }) => {
                         <MenuItem>
                             <Link to="/grammars/regular">Regulares</Link>
                         </MenuItem>
+                        <MenuItem>
+                            <Link to="/grammars/contextFree">Livres de contexto</Link>
+                        </MenuItem>
                     </SubMenu>
                     <SubMenu
                         title="Expressões"
