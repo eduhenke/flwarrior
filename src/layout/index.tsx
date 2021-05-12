@@ -69,7 +69,7 @@ const AppLayout: FunctionComponent = ({ children }) => {
                 <Header>
                     <KnightIcon />
                     <Title level={3} theme="light">
-                        FL Warrior
+                        FL Soldier
                     </Title>
                 </Header>
                 <Menu mode="inline">

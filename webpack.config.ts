@@ -79,7 +79,7 @@ const config: Array<Configuration> = [
             contentBase: path.resolve(__dirname, "public"),
             contentBasePublicPath: "/static",
             compress: true,
-            port: 9000,
+            port: 9600,
             hot: true,
             open: true,
             historyApiFallback: true,
