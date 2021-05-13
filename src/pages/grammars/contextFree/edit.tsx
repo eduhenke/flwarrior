@@ -38,7 +38,7 @@ import {
 } from "@lib/grammar/Grammar";
 import { toDBEntry as machineToDBEntry } from "@/lib/automaton/Machine";
 import { convertRegularGrammarToNonDeterministicFiniteMachine } from "@/lib/conversion";
-import { removeDirectNonDeterminism } from '../../../lib/grammar/Grammar';
+import { removeDirectNonDeterminism, removeLeftRecursionFromGrammar } from '../../../lib/grammar/Grammar';
 // Define Typings
 export interface ITGEditPageProps {
     id: string;
@@ -185,8 +185,8 @@ export default function RegularGrammarEdit(): JSX.Element {
             )
         );
 
-    const removeLeftRecursion = (grammar: IIGrammar) => {
-
+    const removeLeftRecursion = () => {
+        setGrammar(removeLeftRecursionFromGrammar(grammar));        
     };
 
     const removeGrammarDeterminism = () => {
@@ -284,7 +284,7 @@ export default function RegularGrammarEdit(): JSX.Element {
                             </Tooltip>,
 
                             <Tooltip title="Tira recursão a esquerda" key="convert-machine-tooltip">
-                                <Button key="button-convert-machine" onClick={() => console.log("assldfjladsk" + grammar)}>
+                                <Button key="button-convert-machine" onClick={removeLeftRecursion}>
                                     Eliminar recursão à esquerda
                               </Button>
                             </Tooltip>,

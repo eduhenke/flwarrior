@@ -272,9 +272,10 @@ export const convertRulesFromJS = (jsRules: Record<string, string[]>): Productio
 
 export const addNewHead = (grammar: IIGrammar, old: string): [IIGrammar, string] => {
     const symbols = grammar.get('nonTerminalSymbols') as IAlphabet;
-    let newHead = old + "'";
+    let newHead = String.fromCharCode(old.charCodeAt(0) + 1);
+
     while (symbols.has(newHead)) {
-        newHead += "'";
+        newHead = String.fromCharCode(newHead.charCodeAt(0) + 1);
     }
     return [addNonTerminalSymbol(grammar, newHead), newHead];
 }
@@ -369,6 +370,42 @@ export const removeIndirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
     console.log({ rules });
     return grammar.update('productionRules', () => convertRulesFromJS(newRules));
 }
+
+export const removeLeftRecursionFromGrammar = (grammar: IIGrammar): IIGrammar => {
+    const nonTerminalSymbols = grammar.get("nonTerminalSymbols") as IAlphabet;
+    const productionRules = grammar.get("productionRules") as ProductionRules;
+    const productionRulesJS = convertRulesToJS(productionRules);
+
+    
+    
+    const prefixes = Object.entries(productionRules)
+        .map(([head, body]) => [head, longestCommonPrefix(body)])
+        .filter(([_, prefix]) => prefix.length > 0);
+
+      
+      for (const [head, body] of Object.entries(productionRulesJS)) {
+        body.filter(item => item !== head);
+        var transitionsWithoutHeadAtStart = body.filter(item => item[0] !== head);
+        var transitionsWithHeadAtStart = body.filter(item => item[0] == head);
+        if (transitionsWithHeadAtStart.length) {
+          const [newGrammar, newHead] = addNewHead(grammar, head);
+            
+          var transitionsWithHeadAtStart2 = transitionsWithHeadAtStart.map(
+              (item) => item.slice(1) + newHead
+          );
+          var transitionsWithoutHeadAtStart2 = transitionsWithoutHeadAtStart.map(
+              (item) => transitionsWithoutHeadAtStart+ newHead
+          );
+          productionRulesJS[newHead]= transitionsWithHeadAtStart2
+          productionRulesJS[head] = transitionsWithoutHeadAtStart2;
+        }
+      }      
+
+
+    return grammar.update("productionRules", () => convertRulesFromJS(productionRulesJS));
+};
+
+
 
 // export const leftFactor = (grammar: IIGrammar): IIGrammar => {
 // }
