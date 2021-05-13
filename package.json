@@ -81,5 +81,6 @@
 		"webpack-cli": "^4.5.0",
 		"webpack-dev-server": "^3.11.2",
 		"webpackbar": "^5.0.0-3"
-	}
+	},
+	"version": "0.0.0"
 }

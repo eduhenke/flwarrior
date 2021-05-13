@@ -224,6 +224,8 @@ export const toDBEntry = (grammar: IIGrammar): GrammarDBEntry => {
 };
 
 const longestCommonPrefix = (strs: string[]): string => {
+    if (!strs?.length) return '';
+
     let smallest = strs.reduce((min, str) => min < str ? min : str);
     let largest = strs.reduce((min, str) => min > str ? min : str);
 
@@ -268,6 +270,55 @@ export const convertRulesFromJS = (jsRules: Record<string, string[]>): Productio
         [Immutable.List(head.split('')), Immutable.Set(body.map(symbols => Immutable.List(symbols.split(''))))]
     ));
 
+export const addNewHead = (grammar: IIGrammar, old: string): [IIGrammar, string] => {
+    const symbols = grammar.get('nonTerminalSymbols') as IAlphabet;
+    let newHead = old + "'";
+    while (symbols.has(newHead)) {
+        newHead += "'";
+    }
+    return [addNonTerminalSymbol(grammar, newHead), newHead];
+}
+
+const removeNDBodies = (grammar: IIGrammar, head: string, bodies: string[]): [IIGrammar, Record<string, string[]>] => {
+    const prefix = longestCommonPrefix(bodies);
+    const entries = bodies.map(word => word.startsWith(prefix) ? [prefix, word.replace(prefix, '')] : [word, '']);
+    const updatedBody = entries.map(s => s[0]);
+    const newBody = entries.map(s => s[1]);
+    if (updatedBody.some(word => word.length)) {
+        const [newGrammar, newHead] = addNewHead(grammar, head);
+        return [newGrammar, {
+            [head]: [...new Set(updatedBody)].map(x => x + newHead),
+            [newHead]: newBody,
+        }]
+    }
+    return [grammar, {}];
+}
+
+// export const removeDirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
+//     const productionRules = grammar.get('productionRules') as ProductionRules;
+//     const rules = convertRulesToJS(productionRules);
+//     console.log(productionRules, convertRulesFromJS(rules));
+//     console.log(rules);
+//     const prefixes = Object
+//         .entries(rules)
+//         .map(([head, body]) => [head, longestCommonPrefix(body)])
+//         .filter(([_, prefix]) => prefix.length > 0);
+
+//     let newRules = rules;
+//     for (const [head, body] of Object.entries(rules)) {
+//         ([grammar, newRules] = removeNDBodies(grammar, head, body));
+//     }
+
+//     console.log({ rules });
+//     return grammar.update('productionRules', () => convertRulesFromJS(newRules));
+// }
+const groupBy = function (xs, f) {
+    return xs.reduce(function (rv, x) {
+        (rv[f(x)] = rv[f(x)] || []).push(x);
+        return rv;
+    }, {});
+};
+
 export const removeDirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
     const productionRules = grammar.get('productionRules') as ProductionRules;
     const rules = convertRulesToJS(productionRules);
@@ -278,21 +329,45 @@ export const removeDirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
         .map(([head, body]) => [head, longestCommonPrefix(body)])
         .filter(([_, prefix]) => prefix.length > 0);
 
-    for (const [head, body] of Object.entries(rules)) {
-        const prefix = longestCommonPrefix(body);
-        const entries = body.map(word => word.startsWith(prefix) ? [prefix, word.replace(prefix, '')] : [word, '']);
-        const updatedBody = entries.map(s => s[0]);
-        const newBody = entries.map(s => s[1]);
-        const newHead = head + "'";
-        if (updatedBody.some(word => word.length)) {
-            rules[head] = [...new Set(updatedBody)].map(x => x + newHead);
-            rules[newHead] = newBody;
-            grammar = addProductionHead(grammar, [head, "'"]);
+    let newRules = rules;
+    for (const [head, bodies] of Object.entries(rules)) {
+        const groupedByPrefix: Record<string, string[]> = groupBy(bodies, word => word[0]);
+        let updatedBodies = [];
+        for (const [prefix, bodies] of Object.entries(groupedByPrefix)) {
+            if (bodies.length > 1) {
+                let newHead;
+                ([grammar, newHead] = addNewHead(grammar, head));
+                updatedBodies = [...updatedBodies, prefix + newHead];
+                newRules[newHead] = bodies.map(body => body.replace(prefix, ''))
+            } else {
+                updatedBodies = [...updatedBodies, ...bodies];
+            }
         }
+        newRules[head] = updatedBodies;
     }
 
     console.log({ rules });
-    return grammar.update('productionRules', () => convertRulesFromJS(rules));
+    return grammar.update('productionRules', () => convertRulesFromJS(newRules));
+}
+
+export const removeIndirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
+    const productionRules = grammar.get('productionRules') as ProductionRules;
+    const rules = convertRulesToJS(productionRules);
+
+    console.log(rules);
+
+    let newRules = rules;
+    for (const [head, body] of Object.entries(rules)) {
+        const [newGrammar, newRuless] = removeNDBodies(grammar, head, body);
+        grammar = newGrammar;
+        newRules = {
+            ...newRules,
+            ...newRuless
+        };
+    }
+
+    console.log({ rules });
+    return grammar.update('productionRules', () => convertRulesFromJS(newRules));
 }
 
 // export const leftFactor = (grammar: IIGrammar): IIGrammar => {
