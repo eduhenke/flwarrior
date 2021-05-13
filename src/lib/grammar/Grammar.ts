@@ -5,6 +5,7 @@ import { ASymbol, EPSILON } from "../AlphabetSymbol";
 
 // Immutability Port
 export type IGrammarWord = Immutable.List<ASymbol>;
+type ProductionRules = Immutable.Map<IGrammarWord, Immutable.Set<IGrammarWord>>;
 export interface IGrammar {
     id: string;
     name: string;
@@ -12,7 +13,7 @@ export interface IGrammar {
     startSymbol: ASymbol;
     terminalSymbols: IAlphabet;
     nonTerminalSymbols: IAlphabet;
-    productionRules: Immutable.Map<IGrammarWord, Immutable.Set<IGrammarWord>>;
+    productionRules: ProductionRules;
 }
 export type IIGrammar = Immutable.Map<keyof IGrammar, IGrammar[keyof IGrammar]>;
 
@@ -221,3 +222,78 @@ export const toDBEntry = (grammar: IIGrammar): GrammarDBEntry => {
             .toJS() as GrammarDBEntry["transitions"],
     } as GrammarDBEntry;
 };
+
+const longestCommonPrefix = (strs: string[]): string => {
+    let smallest = strs.reduce((min, str) => min < str ? min : str);
+    let largest = strs.reduce((min, str) => min > str ? min : str);
+
+    console.log(smallest, largest);
+    for (let i = 0; i < smallest.length; i++) {
+        if (smallest[i] != largest[i])
+            return smallest.substr(0, i);
+    }
+
+    return '';
+};
+
+// export const removeDirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
+//     const productionRules = grammar.get('productionRules') as ProductionRules;
+//     // productionRules.map((rules, nonTerminalSymbol) => {
+//     //     rules.
+//     // })
+//     // productionRules.forEach((body, head) => {
+//     //     const headSymbol = head.get(0);
+//     // });
+//     const prefixes = productionRules.map((body, head) => {
+//         if (head.size > 1)
+//             throw new Error('rules with more than one symbol in the head not allowed');
+//         return longestCommonPrefix(body);
+//     }).filter(prefix => prefix.length > 0);
+
+//     for (const [head, prefix] of prefixes.entries()) {
+//         grammar = grammar.updateIn(
+//             ["productionRules", Immutable.List(head)],
+//             (old: Immutable.Set<IGrammarWord>) => old.map(word => word.takeWhile((symbol, i) => symbol === prefix[i]))//remove(Immutable.List(body))
+//         );
+//         // addProductionBody(grammar, [head+'\''], )
+//     }
+//     return grammar;
+// }
+
+export const convertRulesToJS = (rules: ProductionRules): Record<string, string[]> =>
+    rules.toMap().mapKeys(head => head.toArray().join('')).map(body => body.toArray().map(symbols => symbols.join(''))).toJS() as Record<string, string[]>;
+
+export const convertRulesFromJS = (jsRules: Record<string, string[]>): ProductionRules =>
+    Immutable.Map(Object.entries(jsRules).map(([head, body]) =>
+        [Immutable.List(head.split('')), Immutable.Set(body.map(symbols => Immutable.List(symbols.split(''))))]
+    ));
+
+export const removeDirectNonDeterminism = (grammar: IIGrammar): IIGrammar => {
+    const productionRules = grammar.get('productionRules') as ProductionRules;
+    const rules = convertRulesToJS(productionRules);
+    console.log(productionRules, convertRulesFromJS(rules));
+    console.log(rules);
+    const prefixes = Object
+        .entries(rules)
+        .map(([head, body]) => [head, longestCommonPrefix(body)])
+        .filter(([_, prefix]) => prefix.length > 0);
+
+    for (const [head, body] of Object.entries(rules)) {
+        const prefix = longestCommonPrefix(body);
+        const entries = body.map(word => word.startsWith(prefix) ? [prefix, word.replace(prefix, '')] : [word, '']);
+        const updatedBody = entries.map(s => s[0]);
+        const newBody = entries.map(s => s[1]);
+        const newHead = head + "'";
+        if (updatedBody.some(word => word.length)) {
+            rules[head] = [...new Set(updatedBody)].map(x => x + newHead);
+            rules[newHead] = newBody;
+            grammar = addProductionHead(grammar, [head, "'"]);
+        }
+    }
+
+    console.log({ rules });
+    return grammar.update('productionRules', () => convertRulesFromJS(rules));
+}
+
+// export const leftFactor = (grammar: IIGrammar): IIGrammar => {
+// }

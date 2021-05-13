@@ -38,6 +38,7 @@ import {
 } from "@lib/grammar/Grammar";
 import { toDBEntry as machineToDBEntry } from "@/lib/automaton/Machine";
 import { convertRegularGrammarToNonDeterministicFiniteMachine } from "@/lib/conversion";
+import { removeDirectNonDeterminism } from '../../../lib/grammar/Grammar';
 // Define Typings
 export interface ITGEditPageProps {
     id: string;
@@ -183,10 +184,17 @@ export default function RegularGrammarEdit(): JSX.Element {
                 newRuleBodySymbols.split("")
             )
         );
-    
-    const removeLeftRecursion = () => {
-      
+
+    const removeLeftRecursion = (grammar: IIGrammar) => {
+
     };
+
+    const removeGrammarDeterminism = () => {
+        setGrammar(removeDirectNonDeterminism(grammar));
+    }
+
+    console.log(grammar?.toJS());
+    console.log(grammar && removeDirectNonDeterminism(grammar).toJS());
 
     const newAlphabetTSymbol = (newSymbol: string) =>
         setGrammar(addTerminalSymbol(grammar, newSymbol));
@@ -269,25 +277,19 @@ export default function RegularGrammarEdit(): JSX.Element {
                         title={`Editar - ${name || idToEdit}`}
                         subTitle="Gramática Regular"
                         extra={[
-                            <Tooltip
-                              title="Tira recursão a esquerda"
-                              key="convert-machine-tooltip"
-                            >
-                              <Button
-                                key="button-convert-machine"
-                                onClick={() => console.log("assldfjladsk" + grammar)}
-                              >
-                                Eliminar recursão à esquerda
+                            <Tooltip title="Fatorar" key="convert-machine-tooltip">
+                                <Button key="button-convert-machine" onClick={removeGrammarDeterminism}>
+                                    Fatorar
                               </Button>
                             </Tooltip>,
-                            <Tooltip
-                                title="Converte a gramática para um AFND"
-                                key="convert-machine-tooltip"
-                            >
-                                <Button
-                                    key="button-convert-machine"
-                                    onClick={convertToMachine}
-                                >
+
+                            <Tooltip title="Tira recursão a esquerda" key="convert-machine-tooltip">
+                                <Button key="button-convert-machine" onClick={() => console.log("assldfjladsk" + grammar)}>
+                                    Eliminar recursão à esquerda
+                              </Button>
+                            </Tooltip>,
+                            <Tooltip title="Converte a gramática para um AFND" key="convert-machine-tooltip" >
+                                <Button key="button-convert-machine" onClick={convertToMachine}>
                                     Converter - Autômato
                                 </Button>
                             </Tooltip>,
